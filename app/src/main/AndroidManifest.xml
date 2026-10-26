@@ -5,7 +5,7 @@
     <application
         android:allowBackup="true"
         android:label="WIM100 Selección"
-        android:theme="@style/Theme.WIM100"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:supportsRtl="true">
         <activity
             android:name="cl.duoc.wim100.MainActivity"
