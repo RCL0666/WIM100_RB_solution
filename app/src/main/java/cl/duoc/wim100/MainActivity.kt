@@ -173,8 +173,12 @@ fun WIM100App(vm: SelectionViewModel = viewModel()) {
                         )
                         Page.CANDIDATES -> CandidatesScreen(
                             candidates = candidates,
+                            isApiLoading = vm.isApiLoading,
+                            apiStatusMessage = vm.apiStatusMessage,
                             onAdd = { showAdd = true },
-                            onSelect = { selectedCandidate = it }
+                            onSelect = { selectedCandidate = it },
+                            onImportApi = { vm.fetchExternalCandidates() },
+                            onSyncBackend = { vm.syncWithBackendMicroservice() }
                         )
                         Page.EVALUATION -> EvaluationScreen(
                             candidates = candidates,

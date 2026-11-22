@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
@@ -6,6 +7,7 @@
         android:allowBackup="true"
         android:label="WIM100 Selección"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        android:usesCleartextTraffic="true"
         android:supportsRtl="true">
         <activity
             android:name="cl.duoc.wim100.MainActivity"

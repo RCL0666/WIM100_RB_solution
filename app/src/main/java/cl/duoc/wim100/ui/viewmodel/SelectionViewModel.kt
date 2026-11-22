@@ -190,6 +190,97 @@ class SelectionViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    var isApiLoading by mutableStateOf(false)
+        private set
+
+    var apiStatusMessage by mutableStateOf<String?>(null)
+        private set
+
+    fun fetchExternalCandidates() {
+        viewModelScope.launch {
+            isApiLoading = true
+            apiStatusMessage = null
+            try {
+                val response = cl.duoc.wim100.network.RetrofitClient.externalApiService.getRandomCandidates(count = 3)
+                if (response.isSuccessful && response.body() != null) {
+                    val results = response.body()!!.results
+                    var importedCount = 0
+                    results.forEach { item ->
+                        val fullName = "${item.name.first} ${item.name.last}"
+                        val candidate = Candidate(
+                            name = fullName,
+                            email = item.email,
+                            rut = "${(10..25).random()}.${(100..999).random()}.${(100..999).random()}-K",
+                            phone = item.phone,
+                            role = listOf("Desarrolladora Mobile", "Analista QA", "Backend Developer", "Diseñadora UX/UI").random(),
+                            experience = "${(1..7).random()} años",
+                            score = (60..95).random().toDouble(),
+                            status = "Importado de API Externa"
+                        )
+                        repository.insertCandidate(candidate)
+                        importedCount++
+                    }
+                    apiStatusMessage = "Éxito: $importedCount candidato(s) importado(s) desde RandomUser API"
+                    log("Se importaron $importedCount perfiles desde API Externa (RandomUser API)")
+                    notificationHelper.showNotification(
+                        title = "API Externa Consumida",
+                        message = "Se importaron $importedCount candidatos exitosamente"
+                    )
+                } else {
+                    apiStatusMessage = "Error en la API Externa: ${response.code()}"
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                apiStatusMessage = "Error de red al conectar con API Externa: ${e.message}"
+            } finally {
+                isApiLoading = false
+            }
+        }
+    }
+
+    fun syncWithBackendMicroservice() {
+        viewModelScope.launch {
+            isApiLoading = true
+            apiStatusMessage = null
+            try {
+                // Intentar sincronizar candidatos hacia el microservicio en Spring Boot (http://10.0.2.2:8080/api/candidates)
+                val currentCandidates = candidates.value
+                if (currentCandidates.isEmpty()) {
+                    apiStatusMessage = "No hay candidatos locales para enviar al Microservicio"
+                    return@launch
+                }
+                var syncedCount = 0
+                currentCandidates.forEach { candidate ->
+                    val dto = cl.duoc.wim100.network.CandidateDto(
+                        rut = candidate.rut,
+                        fullName = candidate.name,
+                        email = candidate.email,
+                        experienceYears = candidate.experience.replace("[^0-9]".toRegex(), "").toIntOrNull() ?: 1,
+                        profession = candidate.role,
+                        status = candidate.status,
+                        score = candidate.score.toInt(),
+                        feedback = candidate.note
+                    )
+                    val response = cl.duoc.wim100.network.RetrofitClient.backendApiService.createCandidate(dto)
+                    if (response.isSuccessful) {
+                        syncedCount++
+                    }
+                }
+                apiStatusMessage = "Microservicio Spring Boot: $syncedCount candidato(s) sincronizado(s)"
+                log("Sincronización CRUD con Microservicio Spring Boot enviada ($syncedCount registros)")
+                notificationHelper.showNotification(
+                    title = "Microservicio Spring Boot",
+                    message = "Sincronizados $syncedCount registros con el backend"
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+                apiStatusMessage = "Microservicio Spring Boot no disponible en http://10.0.2.2:8080 (${e.localizedMessage})"
+            } finally {
+                isApiLoading = false
+            }
+        }
+    }
+
     fun deleteCandidate(id: Int) {
         viewModelScope.launch {
             try {

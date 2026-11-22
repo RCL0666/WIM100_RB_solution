@@ -1,7 +1,5 @@
 package cl.duoc.wim100.domain
 
-import android.util.Patterns
-
 data class ValidationResult(
     val isValid: Boolean,
     val errorMessage: String? = null
@@ -9,12 +7,14 @@ data class ValidationResult(
 
 object FormValidators {
 
+    private val EMAIL_REGEX = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}\$")
+
     fun validateLoginEmail(email: String): ValidationResult {
         val trimmed = email.trim()
         if (trimmed.isEmpty()) {
             return ValidationResult(false, "El correo no puede estar vacío.")
         }
-        if (!Patterns.EMAIL_ADDRESS.matcher(trimmed).matches()) {
+        if (!EMAIL_REGEX.matches(trimmed)) {
             return ValidationResult(false, "Ingresa un correo electrónico válido.")
         }
         return ValidationResult(true)
@@ -78,7 +78,7 @@ object FormValidators {
         if (trimmed.isEmpty()) {
             return ValidationResult(false, "El correo electrónico es obligatorio.")
         }
-        if (!Patterns.EMAIL_ADDRESS.matcher(trimmed).matches()) {
+        if (!EMAIL_REGEX.matches(trimmed)) {
             return ValidationResult(false, "Formato de correo inválido (ejemplo@mail.com).")
         }
         return ValidationResult(true)
